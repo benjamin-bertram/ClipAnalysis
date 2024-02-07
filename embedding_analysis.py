@@ -53,14 +53,36 @@ fig.add_trace(scatter)
 
 # Add lines connecting the points, with colors representing the distances
 lines = []
+# Define the range of colors for the lines based on distance
+colors = ['blue', 'green', 'yellow', 'orange', 'red']
+# Calculate distances and normalize them to get a value between 0 and 1
+distances = []
 for i in range(len(concepts)):
     for j in range(i + 1, len(concepts)):
+        distance = np.sqrt((df.loc[i, "x"] - df.loc[j, "x"])**2 + 
+                           (df.loc[i, "y"] - df.loc[j, "y"])**2 + 
+                           (df.loc[i, "z"] - df.loc[j, "z"])**2)
+        distances.append(distance)
+max_distance = max(distances)
+min_distance = min(distances)
+normalized_distances = [(d - min_distance) / (max_distance - min_distance) for d in distances]
+
+# Reset distances iterator for use in loop
+distance_iter = iter(normalized_distances)
+
+for i in range(len(concepts)):
+    for j in range(i + 1, len(concepts)):
+        # Use the next distance in the iterator
+        normalized_distance = next(distance_iter)
+        # Map the normalized distance to a color
+        color_idx = int(normalized_distance * (len(colors) - 1))
+        line_color = colors[color_idx]
         line = go.Scatter3d(
             x=[df.loc[i, "x"], df.loc[j, "x"]],
             y=[df.loc[i, "y"], df.loc[j, "y"]],
             z=[df.loc[i, "z"], df.loc[j, "z"]],
             mode="lines",
-            line=dict(color="gray", width=1),
+            line=dict(color=line_color, width=3),
             showlegend=False,
             hoverinfo="none",
             visible=False,
@@ -70,7 +92,7 @@ for i in range(len(concepts)):
 
 fig.update_layout(
     scene=dict(
-        xaxis_title="Abstract-Concrete",
+        xaxis_title="Abstract-Concrete", #somewhat arbitrary interpretations
         yaxis_title="Detailed-Simple",
         zaxis_title="Pop-Classic",
     ),
